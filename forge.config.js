@@ -31,6 +31,7 @@ module.exports = {
                     owner: "ariscript",
                     name: "multiserver",
                 },
+                draft: true,
             },
         },
     ],
