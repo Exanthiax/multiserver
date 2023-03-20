@@ -20,7 +20,8 @@ module.exports = {
     variants: {
         extend: {},
     },
-    plugins: [require("tailwind-scrollbar")],
+    // electron always uses chromium, don't need cross-compatibility
+    plugins: [require("tailwind-scrollbar")({ nocompatible: true })],
     variants: {
         scrollbar: ["rounded"],
     },
