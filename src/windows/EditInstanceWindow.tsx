@@ -16,7 +16,6 @@ const EditInstanceWindow = () => {
 
     useEffect(() => {
         state.onceInitialState<{ name: string }>(({ name }) => {
-            log.debug("state recieved in component", name);
             setOldName(name);
 
             ipc.getInstances()

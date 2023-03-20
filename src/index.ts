@@ -83,8 +83,6 @@ app.on("ready", async () => {
     if (!getSettings().instancePath)
         setInstancePath(path.join(app.getPath("userData"), "instances"));
 
-    log.debug(getSettings().instancePath);
-
     createWindow();
 });
 

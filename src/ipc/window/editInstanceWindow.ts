@@ -21,6 +21,5 @@ ipcMain.on("editInstanceWindow", async (_e, name: string) => {
     if (app.isPackaged) editInstanceWindow.removeMenu();
     await editInstanceWindow.loadURL(EDIT_INSTANCE_WINDOW_WEBPACK_ENTRY);
 
-    log.debug("sending state", { name });
     editInstanceWindow.webContents.send("initialState", { name });
 });
