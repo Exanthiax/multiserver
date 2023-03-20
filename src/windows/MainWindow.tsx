@@ -6,6 +6,7 @@ import Instance from "#components/Instance";
 import { render } from "#lib/render";
 import type { InstanceInfo } from "#types";
 import "#app.global.css";
+import Warning from "#components/Warning";
 
 const MainWindow = () => {
     const [instances, setInstances] = useState<InstanceInfo[]>([]);
@@ -25,6 +26,9 @@ const MainWindow = () => {
             <h1 className="text-3xl font-bold font-sans mb-4">
                 Welcome to MultiServer
             </h1>
+
+            <Warning type="warn" content="Test Warning" />
+            <Warning type="error" content="Test Erorr" />
 
             <div className="grid grid-cols-3 gap-2">
                 {instances.map((instance) => (
