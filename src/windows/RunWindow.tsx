@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 
 import Repl from "#components/Repl";
-import Player from "#components/Player";
 import { render } from "#lib/render";
 import type { InstanceInfo } from "#types";
 import "#app.global.css";
@@ -14,14 +13,12 @@ interface ServerOutput {
 
 const RunWindow = (): JSX.Element => {
     const [info, setInfo] = useState<InstanceInfo | null>(null);
-    const [players, setPlayers] = useState<string[]>([]);
     const [output, setOutput] = useState<ServerOutput[]>([]);
 
     const log = useRef<HTMLPreElement>(null);
 
     useEffect(() => {
         server.onInfo(setInfo);
-        server.onPlayers(setPlayers);
 
         server.onStdout((out) =>
             setOutput((s) => [...s, { type: "stdout", content: out }])
@@ -45,17 +42,9 @@ const RunWindow = (): JSX.Element => {
                 className="grid grid-cols-3 grid-rows-2 gap-6 w-full h-full max-h-screen"
                 style={{ maxWidth: "100vw" }}
             >
-                <div className="row-span-2">
-                    <h3>Players</h3>
-                    <ul>
-                        {players.map((p) => (
-                            <li key={p}>
-                                <Player username={p} />
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-                <div className="col-span-2 max-h-full">
+                {/* Players section removed */}
+
+                <div className="col-span-3 max-h-full">
                     <h3>Log</h3>
                     <pre
                         ref={log}
@@ -74,8 +63,9 @@ const RunWindow = (): JSX.Element => {
                         ))}
                     </pre>
                 </div>
+
                 <div
-                    className="col-span-2"
+                    className="col-span-3"
                     style={{ maxHeight: "calc(100% - 1.5rem)" }}
                 >
                     <Repl

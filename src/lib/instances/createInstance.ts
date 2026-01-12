@@ -5,7 +5,6 @@ import https from "https";
 import fs from "fs/promises";
 import { createWriteStream } from "fs";
 import path from "path";
-import cp from "child_process";
 
 import { getMainWindow } from "#index";
 import { resourcesPath } from "#lib/constants";
@@ -14,7 +13,7 @@ import { getSettings } from "#lib/settings";
 import type { InstanceOptions } from "#types";
 
 /**
- * Creates a new minecraft server instance
+ * Creates a new Minecraft server instance (vanilla or paper)
  *
  * @param opts options for the instance
  */
@@ -33,95 +32,67 @@ export async function createInstance(
 
         const instanceRoot = path.join(instancesPath, sanitizedName);
 
-        // TODO: check if instance already exists
-
-        log.info(
-            `Creating directory for ${opts.type} server instance ${opts.name}`
-        );
+        log.info(`Creating directory for ${opts.type} server instance ${opts.name}`);
         await fs.mkdir(instanceRoot, { recursive: true });
 
+        // Write configuration file
         log.debug("Writing configuration file");
         await fs.writeFile(
             path.join(instanceRoot, "multiserver.config.json"),
             JSON.stringify(opts, undefined, 4)
         );
 
+        // Accept EULA
         log.debug("Writing eula.txt");
         await fs.writeFile(path.join(instanceRoot, "eula.txt"), "eula=true");
 
+        // Copy server.properties template
         log.debug("Writing server.properties using 1.19 template");
-        await fs.copyFile(
-            path.join(resourcesPath, "server.properties"),
-            path.join(instanceRoot, "server.properties")
-        );
+        const serverPropsPath = path.join(instanceRoot, "server.properties");
+        await fs.copyFile(path.join(resourcesPath, "server.properties"), serverPropsPath);
 
-        if (opts.type === "fabric") {
-            log.debug("Calling fabric installer");
+        // Enable RCON by default
+        try {
+            let props = await fs.readFile(serverPropsPath, "utf8");
 
-            try {
-                await new Promise<void>((res, rej) => {
-                    const installProcess = cp.spawn(
-                        `${
-                            getSettings().defaultJavaPath ??
-                            (opts.javaPath || "java")
-                        } -jar ${path.join(
-                            resourcesPath,
-                            "fabric-installer.jar"
-                        )} server -dir ${instanceRoot} -mcversion ${
-                            opts.version
-                        } -downloadMinecraft`,
-                        {
-                            shell: true,
-                            windowsHide: true,
-                        }
-                    );
+            const updates: Record<string, string> = {
+                "enable-rcon": "true",
+                "rcon.password": "multiserver",
+                "rcon.port": "25575"
+            };
 
-                    installProcess.stdout.on("data", (data) => {
-                        log.debug(`FABRIC INSTALLER info: ${String(data)}`);
-                    });
-
-                    installProcess.stderr.on("data", (data) => {
-                        log.debug(`FABRIC INSTALLER error: ${String(data)}`);
-                    });
-
-                    installProcess.on("close", (code) => {
-                        log.info(
-                            `FABRIC INSTALLER exited with code ${
-                                code ?? "null"
-                            }`
-                        );
-
-                        if (code === 0) {
-                            res();
-                        } else {
-                            rej();
-                        }
-                    });
-                });
-
-                log.info("Fabric installer finished");
-                log.info("Server creation complete");
-                return true;
-            } catch (e) {
-                log.error(`FABRIC INSTALLER failed: ${e as string}`);
-                return false;
+            for (const key in updates) {
+                const regex = new RegExp(`^${key}=.*$`, "m");
+                if (regex.test(props)) {
+                    props = props.replace(regex, `${key}=${updates[key]}`);
+                } else {
+                    props += `\n${key}=${updates[key]}`;
+                }
             }
+
+            await fs.writeFile(serverPropsPath, props, "utf8");
+            log.debug("RCON enabled with default settings");
+        } catch (err) {
+            log.error("Failed to enable RCON by default:", err);
         }
 
+        // Download server jar (vanilla or paper only)
         log.info(`Downloading ${opts.type} - ${opts.version} server jar`);
-
         const jarURL = await getJarURL(opts.type, opts.version);
 
         log.debug(`Server JAR url: ${jarURL}`);
-        https.get(jarURL, (res) => {
-            const stream = createWriteStream(
-                path.join(instanceRoot, "server.jar")
-            );
-            res.pipe(stream);
-            stream.on("finish", () => stream.close());
+        await new Promise<void>((resolve, reject) => {
+            const stream = createWriteStream(path.join(instanceRoot, "server.jar"));
+            https.get(jarURL, (res) => {
+                res.pipe(stream);
+                stream.on("finish", () => {
+                    stream.close();
+                    resolve();
+                });
+            }).on("error", reject);
         });
 
-        // apply fix for log4j vulnerability (CVE-2021-44228)
+        // Apply Log4j fix if needed
         await fixLog4j(opts, instanceRoot);
 
         log.info("Server creation complete");
@@ -130,7 +101,7 @@ export async function createInstance(
         log.error(e);
         return false;
     } finally {
-        // way less work than having to wire up an IPC event to let the main window know that theres an new instance
+        // Refresh main window
         setTimeout(() => getMainWindow().reload(), 500);
     }
 }

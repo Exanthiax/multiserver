@@ -9,16 +9,12 @@ import {
 } from "@mui/icons-material";
 
 import type { InstanceOptions } from "#types";
-import fabricLogo from "#img/fabric_logo.png";
 import paperLogo from "#img/paper_logo.png";
 import vanillaLogo from "#img/vanilla_logo.png";
-import purpurLogo from "#img/purpur_logo.png";
 
 const images = {
-    fabric: fabricLogo,
     paper: paperLogo,
     vanilla: vanillaLogo,
-    purpur: purpurLogo,
 } as const;
 
 interface InstanceProps {
@@ -71,37 +67,31 @@ const Instance = ({ info }: InstanceProps): JSX.Element => {
                     <p>{info.name}</p>
                 </div>
             </Button>
-            <Menu
-                id={`instance-${info.name}-options`}
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleClose}
-            >
-                <div className="font-[Roboto]">
-                    <MenuItem onClick={handleRun}>
-                        <PlayArrow />
-                        <span className="ml-2">Run</span>
-                    </MenuItem>
-                    <MenuItem onClick={handleEdit}>
-                        <Edit />
-                        <span className="ml-2">Edit</span>
-                    </MenuItem>
-                    <MenuItem onClick={handleOpen}>
-                        <Folder />
-                        <span className="ml-2">Open folder</span>
-                    </MenuItem>
-                    <MenuItem onClick={handleDelete}>
-                        <Delete />
-                        <span className="ml-2">Delete</span>
-                    </MenuItem>
-                    {info.type === "fabric" && (
-                        <MenuItem onClick={handleMods}>
-                            <Extension />
-                            <span className="ml-2">Mods</span>
+                <Menu
+                    id={`instance-${info.name}-options`}
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleClose}
+                >
+                    <div className="font-[Roboto]">
+                        <MenuItem onClick={handleRun}>
+                            <PlayArrow />
+                            <span className="ml-2">Run</span>
                         </MenuItem>
-                    )}
-                </div>
-            </Menu>
+                        <MenuItem onClick={handleEdit}>
+                            <Edit />
+                            <span className="ml-2">Edit</span>
+                        </MenuItem>
+                        <MenuItem onClick={handleOpen}>
+                            <Folder />
+                            <span className="ml-2">Open folder</span>
+                        </MenuItem>
+                        <MenuItem onClick={handleDelete}>
+                            <Delete />
+                            <span className="ml-2">Delete</span>
+                        </MenuItem>
+                    </div>
+                </Menu>
         </>
     );
 };

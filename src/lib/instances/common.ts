@@ -19,7 +19,7 @@ export async function fixLog4j(
 ): Promise<void> {
     const versionMajor = opts.version.split(".").map(Number)[1];
 
-    if (versionMajor < 18 || opts.version == "1.18") {
+    if (versionMajor < 18 || opts.version === "1.18") {
         let log4jArg = "";
 
         if (versionMajor >= 7 && versionMajor <= 11) {
@@ -80,7 +80,7 @@ export async function getJarURL(
     version: string
 ): Promise<string> {
     if (type === "vanilla") {
-        // Vanilla code unchanged
+        // Vanilla
         const manifestRes = await fetch(
             "https://launchermeta.mojang.com/mc/game/version_manifest.json"
         );
@@ -98,7 +98,7 @@ export async function getJarURL(
         return versionInfo.downloads.server.url;
 
     } else if (type === "paper") {
-        // Paper code unchanged
+        // Paper
         const buildsRes = await fetch(
             `https://api.papermc.io/v2/projects/paper/versions/${version}`
         );
@@ -114,24 +114,9 @@ export async function getJarURL(
         const filename = buildInfo.downloads.application.name;
 
         return `https://api.papermc.io/v2/projects/paper/versions/${version}/builds/${buildNumber}/downloads/${filename}`;
-
-    } else if (type === "purpur") {
-        // Get latest build for the version
-        const buildsRes = await fetch(`https://api.purpurmc.org/v2/purpur/${version}`);
-        const buildsInfo = (await buildsRes.json()) as any;
-
-        if (!buildsInfo.builds || buildsInfo.builds.length === 0) {
-            throw new Error(`No Purpur builds found for version ${version}`);
-        }
-
-        // newest build is last
-        const buildNumber = buildsInfo.builds[buildsInfo.builds.length - 1];
-
-        // return direct download URL
-        return `https://api.purpurmc.org/v2/purpur/${version}/${buildNumber}/download`;
     }
 
     throw new TypeError(
-        `invalid server type ${type}, expected "vanilla", "fabric", "paper" or "purpur"`
+        `invalid server type ${type}, expected "vanilla" or "paper"`
     );
 }

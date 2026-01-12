@@ -27,11 +27,10 @@ export async function runInstance(
 
     const { info, path } = instance;
 
+    // Always use "server.jar" since Fabric is removed
     const command = `${
         getSettings().defaultJavaPath ?? (info.javaPath || "java")
-    } ${getSettings().defaultJvmArgs ?? info.jvmArgs ?? ""} -jar ${
-        info.type === "fabric" ? "fabric-server-launch.jar" : "server.jar"
-    } nogui`;
+    } ${getSettings().defaultJvmArgs ?? info.jvmArgs ?? ""} -jar server.jar nogui`;
 
     log.debug(`Running command: \`${command}\``);
 
@@ -69,7 +68,7 @@ export async function runInstance(
     const playerQuery = setInterval(async () => {
         log.debug("Running periodic server query...");
 
-        if (!rconClient.isConnected) return; // don't query if the server isn't ready yet
+        if (!rconClient.isConnected) return;
 
         try {
             const results = await queryFull("localhost");
@@ -77,14 +76,10 @@ export async function runInstance(
             const oldPlayerSet = [...new Set(oldPlayers)];
             const newPlayerSet = [...new Set(results.players.list)];
 
-            // send the server new players list if it has changed
             if (
                 oldPlayerSet.length !== newPlayerSet.length ||
                 oldPlayerSet.some((p, i) => p !== newPlayerSet[i])
             ) {
-                // no need to check if window is destroyed
-                // the interval gets cleared before anyway
-                // (also it doesn't work if i do the check)
                 log.info(`Server ${name}: Player list changed`);
                 log.info("Old", oldPlayers);
                 log.info("New", results.players.list);
@@ -96,7 +91,7 @@ export async function runInstance(
         } catch (e) {
             log.debug(e);
         }
-    }, 5000); // query results are cached for 5 seconds by the server
+    }, 5000);
 
     server.on("close", (code) => {
         rconClient.close();
@@ -118,7 +113,7 @@ export async function runInstance(
 
     window.on("close", () => {
         try {
-            server.stdin.write("stop\n"); // no need to wait for server to fully load this way
+            server.stdin.write("stop\n");
             clearInterval(playerQuery);
             rconClient.close();
         } catch {
@@ -128,7 +123,7 @@ export async function runInstance(
         }
     });
 
-    ipcMain.handle("rcon", async (event, command: string) => {
+    ipcMain.handle("rcon", async (_event, command: string) => {
         if (command === "stop") {
             return "To stop the server, please close the window. The stop command is not needed.";
         }
