@@ -1,6 +1,6 @@
 export interface InstanceOptions {
     name: string;
-    type: "vanilla" | "paper" | "fabric";
+    type: "vanilla" | "paper" | "purpur" | "fabric";
     version: string;
     javaPath?: string;
     jvmArgs?: string;

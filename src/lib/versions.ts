@@ -1,7 +1,7 @@
 import cmp from "semver-compare";
 
 export function getServerTypes(): string[] {
-    return ["vanilla", "paper", "fabric"];
+    return ["vanilla", "paper", "purpur", "fabric"];
 }
 
 export async function getVersions(type: string): Promise<string[]> {
@@ -27,12 +27,10 @@ export async function getVersions(type: string): Promise<string[]> {
                 data
                     .filter(
                         (v) =>
-                            // we only want releases above 1.14
                             v.type === "release" &&
                             Number(v.id.split(".")[1]) >= 14
-                    )
-                    // we only want the release version number
-                    .map((v) => v.id)
+)
+.map((v) => v.id)
                     .sort(cmp)
                     .reverse()
             );
@@ -51,11 +49,23 @@ export async function getVersions(type: string): Promise<string[]> {
             versions: string[];
         };
 
-        // there are pre-releases in there as well
         return data.versions
-            .filter((v) => !/[a-z]/gi.test(v))
+            .filter((v) => !/[a-z]/gi.test(v)) // filter out pre-releases
+            .sort(cmp)
+            .reverse();
+    } else if (type === "purpur") {
+        const res = await fetch("https://api.purpurmc.org/v2/projects/purpur");
+        const data = (await res.json()) as {
+            project_id: string;
+            project_name: string;
+            versions: string[];
+        };
+
+        return data.versions
+            .filter((v) => !/[a-z]/gi.test(v)) // optional: filter out pre-releases if any
             .sort(cmp)
             .reverse();
     }
+
     return [] as string[];
 }

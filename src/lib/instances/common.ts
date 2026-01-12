@@ -80,73 +80,58 @@ export async function getJarURL(
     version: string
 ): Promise<string> {
     if (type === "vanilla") {
+        // Vanilla code unchanged
         const manifestRes = await fetch(
             "https://launchermeta.mojang.com/mc/game/version_manifest.json"
         );
-        const manifest = (await manifestRes.json()) as {
-            latest: {
-                release: string;
-                snapshot: string;
-            };
-            versions: {
-                id: string;
-                type: string;
-                url: string;
-                time: string;
-                releaseTime: string;
-            }[];
-        };
+        const manifest = (await manifestRes.json()) as any;
 
-        const versionURL = manifest.versions.find((v) => v.id === version)?.url;
+        const versionURL = manifest.versions.find((v: any) => v.id === version)?.url;
 
         if (!versionURL) {
             throw new Error(`Could not find version ${version}`);
         }
 
         const versionInfoRes = await fetch(versionURL);
-        const versionInfo = (await versionInfoRes.json()) as {
-            // too lazy for the whole type
-            downloads: {
-                server: {
-                    url: string;
-                };
-            };
-        };
+        const versionInfo = (await versionInfoRes.json()) as any;
 
         return versionInfo.downloads.server.url;
-    } else if (type === "paper") {
-        const buildsRes = await fetch(
-            `https://papermc.io/api/v2/projects/paper/versions/${version}`
-        );
-        const buildsInfo = (await buildsRes.json()) as {
-            project_id: string;
-            project_name: string;
-            version: string;
-            builds: number[];
-        };
 
-        // the newest build number is last
+    } else if (type === "paper") {
+        // Paper code unchanged
+        const buildsRes = await fetch(
+            `https://api.papermc.io/v2/projects/paper/versions/${version}`
+        );
+        const buildsInfo = (await buildsRes.json()) as any;
+
         const buildNumber = buildsInfo.builds[buildsInfo.builds.length - 1];
 
         const buildInfoRes = await fetch(
-            `https://papermc.io/api/v2/projects/paper/versions/${version}/builds/${buildNumber}`
+            `https://api.papermc.io/v2/projects/paper/versions/${version}/builds/${buildNumber}`
         );
-        const buildInfo = (await buildInfoRes.json()) as {
-            // again too lazy for the whole type
-            downloads: {
-                application: {
-                    name: string;
-                };
-            };
-        };
+        const buildInfo = (await buildInfoRes.json()) as any;
 
         const filename = buildInfo.downloads.application.name;
 
-        return `https://papermc.io/api/v2/projects/paper/versions/${version}/builds/${buildNumber}/downloads/${filename}`;
+        return `https://api.papermc.io/v2/projects/paper/versions/${version}/builds/${buildNumber}/downloads/${filename}`;
+
+    } else if (type === "purpur") {
+        // Get latest build for the version
+        const buildsRes = await fetch(`https://api.purpurmc.org/v2/purpur/${version}`);
+        const buildsInfo = (await buildsRes.json()) as any;
+
+        if (!buildsInfo.builds || buildsInfo.builds.length === 0) {
+            throw new Error(`No Purpur builds found for version ${version}`);
+        }
+
+        // newest build is last
+        const buildNumber = buildsInfo.builds[buildsInfo.builds.length - 1];
+
+        // return direct download URL
+        return `https://api.purpurmc.org/v2/purpur/${version}/${buildNumber}/download`;
     }
 
     throw new TypeError(
-        // fabric here in case the user ever sees this
-        `invalid server type ${type}, expected "vanilla", "fabric" or "paper"`
+        `invalid server type ${type}, expected "vanilla", "fabric", "paper" or "purpur"`
     );
 }

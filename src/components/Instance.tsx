@@ -12,11 +12,13 @@ import type { InstanceOptions } from "#types";
 import fabricLogo from "#img/fabric_logo.png";
 import paperLogo from "#img/paper_logo.png";
 import vanillaLogo from "#img/vanilla_logo.png";
+import purpurLogo from "#img/purpur_logo.png";
 
 const images = {
     fabric: fabricLogo,
     paper: paperLogo,
     vanilla: vanillaLogo,
+    purpur: purpurLogo,
 } as const;
 
 interface InstanceProps {
